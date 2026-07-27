@@ -1,0 +1,26 @@
+globalThis.__BUILD_MANIFEST = {
+  "pages": {
+    "/_app": []
+  },
+  "devFiles": [],
+  "polyfillFiles": [
+    "static/chunks/1jx4_next_dist_build_polyfills_polyfill-nomodule.js"
+  ],
+  "lowPriorityFiles": [
+    "static/development/_buildManifest.js",
+    "static/development/_ssgManifest.js",
+    "static/development/_clientMiddlewareManifest.js"
+  ],
+  "rootMainFiles": [
+    "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_217ffo0._.js",
+    "static/chunks/1jx4_next_dist_compiled_next-devtools_index_0gjcjoj.js",
+    "static/chunks/1jx4_next_dist_compiled_react-dom_14ifoqo._.js",
+    "static/chunks/1jx4_next_dist_compiled_react-server-dom-turbopack_0nwnt53._.js",
+    "static/chunks/1jx4_next_dist_compiled_1e_rcl-._.js",
+    "static/chunks/1jx4_next_dist_client_1p9znz2._.js",
+    "static/chunks/1jx4_next_dist_0-fms7s._.js",
+    "static/chunks/1jx4_@swc_helpers_cjs_1sc-dxk._.js",
+    "static/chunks/Desktop_gif-to-whatsapp_1anvha4._.js",
+    "static/chunks/turbopack-Desktop_gif-to-whatsapp_1llo500._.js"
+  ]
+};
