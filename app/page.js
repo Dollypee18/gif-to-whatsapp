@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [shareState, setShareState] = useState("idle"); // idle | sharing | unsupported
 
-  async function handleConvert(e) {
-    e.preventDefault();
+  async function convert(targetUrl) {
     setLoading(true);
     setError("");
     setResult(null);
@@ -18,7 +20,7 @@ export default function Home() {
       const res = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: targetUrl }),
       });
       const data = await res.json();
 
@@ -34,10 +36,25 @@ export default function Home() {
     }
   }
 
-  const [shareState, setShareState] = useState("idle"); // idle | sharing | unsupported
+  function handleSubmit(e) {
+    e.preventDefault();
+    convert(url);
+  }
 
-  const proxiedUrl = result
-    ? `/api/proxy?url=${encodeURIComponent(result.mp4Url)}`
+  // Arriving here from the Android share sheet (via /share redirect):
+  // the URL is already in the query string, so pre-fill and auto-convert.
+  useEffect(() => {
+    const sharedUrl = searchParams.get("url");
+    const auto = searchParams.get("auto");
+    if (sharedUrl && auto) {
+      setUrl(sharedUrl);
+      convert(sharedUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const gifUrl = result
+    ? `/api/gif?url=${encodeURIComponent(result.mp4Url)}`
     : null;
 
   async function handleShare() {
@@ -45,12 +62,12 @@ export default function Home() {
     setShareState("sharing");
 
     try {
-      const res = await fetch(proxiedUrl);
+      const res = await fetch(gifUrl);
       const blob = await res.blob();
-      const file = new File([blob], "clip.mp4", { type: "video/mp4" });
+      const file = new File([blob], "clip.gif", { type: "image/gif" });
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Shared clip" });
+        await navigator.share({ files: [file], title: "Shared GIF" });
         setShareState("idle");
         return;
       }
@@ -68,9 +85,12 @@ export default function Home() {
     <main style={styles.main}>
       <div style={styles.card}>
         <h1 style={styles.h1}>Tweet GIF → WhatsApp</h1>
-        <p style={styles.sub}>Paste a tweet link that has a GIF or video.</p>
+        <p style={styles.sub}>
+          Paste a tweet link, or share directly from the X app if you've
+          installed this to your home screen.
+        </p>
 
-        <form onSubmit={handleConvert} style={styles.form}>
+        <form onSubmit={handleSubmit} style={styles.form}>
           <input
             type="text"
             value={url}
@@ -91,29 +111,30 @@ export default function Home() {
             <video
               src={result.mp4Url}
               poster={result.posterUrl}
-              controls
+              autoPlay
+              loop
+              muted
+              playsInline
               style={styles.video}
             />
             <div style={styles.actions}>
-              <a
-                href={proxiedUrl}
-                download="clip.mp4"
-                style={styles.linkButton}
-              >
-                Download MP4
+              <a href={gifUrl} download="clip.gif" style={styles.linkButton}>
+                Download GIF
               </a>
               <button
                 onClick={handleShare}
                 disabled={shareState === "sharing"}
                 style={styles.linkButtonSecondary}
               >
-                {shareState === "sharing" ? "Preparing..." : "Send to WhatsApp"}
+                {shareState === "sharing"
+                  ? "Converting..."
+                  : "Send to WhatsApp"}
               </button>
             </div>
             {shareState === "unsupported" && (
               <p style={styles.hint}>
                 Your browser can't attach files to WhatsApp directly — opened
-                WhatsApp Web for you instead. Download the MP4 above and attach
+                WhatsApp Web for you instead. Download the GIF above and attach
                 it manually. On a phone, this button uses the native share sheet
                 and attaches it for you automatically.
               </p>
@@ -122,6 +143,14 @@ export default function Home() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }
 
